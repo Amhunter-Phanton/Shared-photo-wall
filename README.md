@@ -12,7 +12,7 @@ A simple image sharing website that supports uploading, viewing, downloading, an
  • 📱 响应式设计
 
 
-# 📸 部落图片墙
+# 📸 共享图片墙
 
 一个简单的图片分享网站，支持上传、查看、下载、删除（自己的）图片！
 
