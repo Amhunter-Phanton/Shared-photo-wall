@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共享图片墙 - 分享你的精彩瞬间</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+            overflow: auto; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        header p { font-size: 1.1rem; opacity: 0.9; }
+        .card { 
+            background: white; border-radius: 20px; padding: 30px; 
+            margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+        .user-info { 
+            background: #e7f3ff; border: 1px solid #b8daff; border-radius: 10px; 
+            padding: 15px; margin-bottom: 20px; display: flex; 
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; 
+        }
+        .user-info span { color: #004085; }
+        .user-info code { 
+            background: white; padding: 3px 8px; border-radius: 4px; 
+            font-size: 0.85rem; color: #004085; 
+        }
+        .btn { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; border: none; padding: 12px 30px; 
+            border-radius: 25px; font-size: 1rem; cursor: pointer; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .btn-refresh { background: #2ed573; margin-left: 10px; }
+        .upload-area { 
+            border: 3px dashed #667eea; border-radius: 15px; padding: 50px 20px; 
+            text-align: center; cursor: pointer; background: #f0f4ff; 
+            transition: all 0.3s ease; 
+        }
+        .upload-area:hover { border-color: #667eea; background: #e0e8ff; transform: scale(1.01); }
+        .upload-area.dragover { border-color: #667eea; background: #e0e8ff; transform: scale(1.02); }
+        .upload-icon { font-size: 3.5rem; display: block; margin-bottom: 15px; }
+        .upload-text { font-size: 1.3rem; color: #333; margin-bottom: 10px; }
+        .upload-hint { color: #888; font-size: 0.95rem; }
+        #fileInput { display: none; }
+        .name-input { margin-top: 20px; }
+        .name-input input { 
+            padding: 12px 24px; border: 2px solid #e0e0e0; 
+            border-radius: 25px; font-size: 1rem; width: 220px; 
+            outline: none; transition: border-color 0.3s ease; 
+        }
+        .name-input input:focus { border-color: #667eea; }
+        .gallery-section { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 25px; flex-wrap: wrap; gap: 15px; 
+        }
+        .gallery-section h2 { color: #333; font-size: 1.8rem; }
+        .image-count { color: #888; font-size: 1rem; }
+        .gallery { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            gap: 20px; 
+        }
+        .image-card { 
+            position: relative; border-radius: 15px; overflow: hidden; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15); aspect-ratio: 1; 
+            background: #f5f5f5; transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        }
+        .image-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.25); }
+        .image-card.own-upload { border: 3px solid #2ed573; }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .image-info { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent); 
+            color: white; padding: 25px 15px 15px; 
+            transform: translateY(100%); transition: transform 0.3s ease; 
+        }
+        .image-card:hover .image-info { transform: translateY(0); }
+        .uploader-name { font-weight: bold; font-size: 1.05rem; margin-bottom: 5px; }
+        .uploader-name.own { color: #2ed573; }
+        .upload-time { font-size: 0.85rem; opacity: 0.8; }
+        .own-badge { 
+            position: absolute; top: 12px; right: 12px; background: #2ed573; 
+            color: white; padding: 6px 14px; border-radius: 20px; 
+            font-size: 0.8rem; font-weight: bold; z-index: 10; 
+        }
+        .image-overlay { 
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.6); display: flex; 
+            justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; 
+            opacity: 0; transition: opacity 0.3s ease; 
+        }
+        .image-card:hover .image-overlay { opacity: 1; }
+        .overlay-btn { 
+            color: white; border: none; padding: 12px 20px; 
+            border-radius: 25px; cursor: pointer; font-size: 0.95rem; 
+            transition: transform 0.2s ease; font-weight: 500; 
+        }
+        .overlay-btn:hover { transform: scale(1.1); }
+        .view-btn { background: #2ed573; }
+        .download-btn { background: #667eea; }
+        .delete-btn { background: #ff6b6b; }
+        .empty-state { text-align: center; padding: 80px 20px; color: #888; }
+        .empty-state-icon { font-size: 5rem; margin-bottom: 20px; display: block; }
+        .empty-state p { font-size: 1.1rem; margin-bottom: 10px; }
+        .loading-state { text-align: center; padding: 80px 20px; color: #888; }
+        .spinner { 
+            border: 5px solid #f3f3f3; border-top: 5px solid #667eea; 
+            border-radius: 50%; width: 60px; height: 60px; 
+            animation: spin 1s linear infinite; margin: 0 auto 25px; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.92); z-index: 1000; justify-content: center; 
+            align-items: center; padding: 20px; 
+        }
+        .modal.active { display: flex; }
+        .modal-content { max-width: 95%; max-height: 95%; border-radius: 15px; text-align: center; }
+        .modal-content img { max-width: 100%; max-height: 80vh; display: block; border-radius: 10px; margin: 0 auto; }
+        .modal-info { color: white; margin-top: 20px; font-size: 1.1rem; }
+        .modal-close { 
+            position: absolute; top: 25px; right: 35px; color: white; 
+            font-size: 3.5rem; cursor: pointer; transition: transform 0.2s ease; 
+        }
+        .modal-close:hover { transform: scale(1.2); }
+        .confirm-modal { background: white; border-radius: 20px; padding: 45px; max-width: 450px; text-align: center; }
+        .confirm-modal h3 { color: #333; margin-bottom: 15px; font-size: 1.5rem; }
+        .confirm-modal p { color: #666; margin-bottom: 30px; font-size: 1.05rem; }
+        .btn-cancel { background: #6c757d; margin-right: 15px; }
+        .btn-confirm-delete { background: #ff6b6b; }
+        .toast { 
+            position: fixed; bottom: 35px; left: 50%; 
+            transform: translateX(-50%) translateY(100px); 
+            background: #333; color: white; padding: 15px 35px; 
+            border-radius: 30px; opacity: 0; transition: all 0.3s ease; 
+            z-index: 2000; font-size: 1rem; 
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { background: #2ed573; }
+        .toast.error { background: #ff6b6b; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: scale(0.9); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+        .image-card { animation: fadeIn 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 共享图片墙</h1>
+            <p>和大家一起分享你的精彩瞬间！</p>
+        </header>
+
+        <div class="card">
+            <div class="user-info">
+                <span>👤 你的名字：<code id="displayUserName">加载中...</code></span>
+                <span>💡 带绿色边框的是你上传的，可以删除</span>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <span class="upload-icon">📁</span>
+                <p class="upload-text">点击或拖拽图片到这里上传</p>
+                <p class="upload-hint">支持 JPG、PNG、GIF、WebP 格式</p>
+                <div class="name-input">
+                    <input type="text" id="uploaderName" placeholder="留下你的名字" maxlength="20">
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/*">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">选择图片</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="gallery-section">
+                <div>
+                    <h2>🖼️ 大家的照片</h2>
+                    <span class="image-count" id="imageCount">加载中...</span>
+                </div>
+                <button class="btn btn-refresh" onclick="loadImages()">🔄 刷新</button>
+            </div>
+            <div class="gallery" id="gallery">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>正在加载图片...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="viewModal">
+        <span class="modal-close" onclick="closeViewModal()">&times;</span>
+        <div class="modal-content" id="viewModalContent"></div>
+    </div>
+
+    <div class="modal" id="confirmModal">
+        <div class="confirm-modal">
+            <h3>🗑️ 确认删除？</h3>
+            <p id="confirmMessage">你确定要删除这张图片吗？此操作无法撤销。</p>
+            <div>
+                <button class="btn btn-cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="btn btn-confirm-delete" id="confirmDeleteBtn">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        let supabaseClient = null;
+        let currentUserId = '';
+        let pendingDelete = null;
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const gallery = document.getElementById('gallery');
+        const uploaderNameInput = document.getElementById('uploaderName');
+        const displayUserName = document.getElementById('displayUserName');
+        const imageCount = document.getElementById('imageCount');
+        const viewModal = document.getElementById('viewModal');
+        const viewModalContent = document.getElementById('viewModalContent');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const toast = document.getElementById('toast');
+
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function initUser() {
+            if (!localStorage.getItem('user_id')) {
+                localStorage.setItem('user_id', 'user_' + Date.now());
+            }
+            currentUserId = localStorage.getItem('user_id');
+
+            if (!localStorage.getItem('uploaderName')) {
+                const randomName = '用户' + Math.floor(Math.random() * 10000);
+                localStorage.setItem('uploaderName', randomName);
+            }
+            const userName = localStorage.getItem('uploaderName');
+            uploaderNameInput.value = userName;
+            displayUserName.textContent = userName;
+        }
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (error) {
+                console.error('Supabase 初始化失败:', error);
+            }
+        }
+
+        async function handleFiles(files) {
+            if (!supabaseClient) {
+                showToast('连接失败，请刷新页面重试', 'error');
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const validFiles = Array.from(files).filter(f => validTypes.includes(f.type));
+
+            if (validFiles.length === 0) {
+                showToast('请选择有效的图片文件', 'error');
+                return;
+            }
+
+            uploadArea.classList.add('uploading');
+            const uploaderName = uploaderNameInput.value.trim() || '匿名用户';
+
+            for (let i = 0; i < validFiles.length; i++) {
+                const file = validFiles[i];
+                try {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+                    const { error: uploadError } = await supabaseClient.storage.from('photos').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabaseClient.storage.from('photos').getPublicUrl(fileName);
+
+                    const { error: dbError } = await supabaseClient.from('photos').insert([{
+                        url: publicUrl,
+                        name: file.name,
+                        uploader: uploaderName,
+                        user_id: currentUserId,
+                        file_path: fileName
+                    }]);
+
+                    if (dbError) throw dbError;
+
+                } catch (error) {
+                    console.error('上传失败:', error);
+                    showToast('上传失败: ' + (error.message || '未知错误'), 'error');
+                }
+            }
+
+            uploadArea.classList.remove('uploading');
+            showToast(`成功上传 ${validFiles.length} 张图片！`, 'success');
+            loadImages();
+        }
+
+        async function loadImages() {
+            if (!supabaseClient) {
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-state-icon">❌</span>
+                        <p>连接失败，请刷新页面重试</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gallery.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>正在加载图片...</p>
+                </div>
+            `;
+
+            try {
+                const { data, error } = await supabaseClient.from('photos').select('*').order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const images = data || [];
+                imageCount.textContent = `共 ${images.length} 张图片`;
+
+                if (images.length === 0) {
+                    gallery.innerHTML = `
+                        <div class="empty-state">
+                            <span class="empty-state-icon">🖼️</span>
+                            <p>还没有任何照片</p>
+                            <p style="margin-top: 10px;">做第一个上传照片的人吧！</p>
+                        </div>
+                    `;
+                } else {
+                    renderGallery(images);
+                }
+
+            } catch (error) {
+                console.error('加载失败:', error);
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-state-icon">❌</span>
+                        <p>加载失败</p>
+                        <p style="margin-top: 10px;">点击刷新按钮重试</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderGallery(images) {
+            gallery.innerHTML = images.map(img => {
+                const isOwnUpload = img.user_id === currentUserId;
+                let timeStr = '';
+                if (img.created_at) {
+                    try {
+                        const date = new Date(img.created_at);
+                        timeStr = date.toLocaleString('zh-CN');
+                    } catch (e) {
+                        timeStr = '';
+                    }
+                }
+
+                const safeUploader = (img.uploader || '匿名').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                const safeName = (img.name || '图片').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                const safePath = (img.file_path || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+
+                return `
+                    <div class="image-card ${isOwnUpload ? 'own-upload' : ''}">
+                        ${isOwnUpload ? '<span class="own-badge">我的</span>' : ''}
+                        <img src="${img.url}" alt="${safeName}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22><rect fill=%22%23ddd%22 width=%22400%22 height=%22400%22/><text x=%22200%22 y=%22200%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2240%22>加载失败</text></svg>'">
+                        <div class="image-info">
+                            <div class="uploader-name ${isOwnUpload ? 'own' : ''}">${safeUploader} ${isOwnUpload ? '(我)' : ''}</div>
+                            ${timeStr ? `<div class="upload-time">${timeStr}</div>` : ''}
+                        </div>
+                        <div class="image-overlay">
+                            <button class="overlay-btn view-btn" onclick="viewImage('${img.url}', '${safeUploader}', '${timeStr}')">查看</button>
+                            <button class="overlay-btn download-btn" onclick="downloadImage('${img.url}', '${safeName}')">下载</button>
+                            ${isOwnUpload ? `<button class="overlay-btn delete-btn" onclick="confirmDeleteImage(${img.id}, '${safePath}', '${safeName}')">删除</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewImage(url, uploader, time) {
+            viewModalContent.innerHTML = `
+                <img src="${url}" alt="大图预览">
+                <div class="modal-info">
+                    <p><strong>${uploader}</strong>${time ? ` · ${time}` : ''}</p>
+                </div>
+            `;
+            viewModal.classList.add('active');
+        }
+
+        function closeViewModal() {
+            viewModal.classList.remove('active');
+        }
+
+        function downloadImage(url, name) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name || 'photo.jpg';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('开始下载图片！', 'success');
+        }
+
+        function confirmDeleteImage(id, filePath, name) {
+            pendingDelete = { id, filePath };
+            document.getElementById('confirmMessage').textContent = `你确定要删除图片「${name}」吗？此操作无法撤销。`;
+            confirmModal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            confirmModal.classList.remove('active');
+            pendingDelete = null;
+        }
+
+        async function deleteImage() {
+            if (!pendingDelete) return;
+
+            const { id, filePath } = pendingDelete;
+
+            try {
+                const { error: dbError } = await supabaseClient.from('photos').delete().eq('id', id);
+                if (dbError) throw dbError;
+
+                if (filePath) {
+                    try {
+                        await supabaseClient.storage.from('photos').remove([filePath]);
+                    } catch (storageError) {
+                        console.error('存储文件删除失败:', storageError);
+                    }
+                }
+
+                closeConfirmModal();
+                showToast('图片删除成功！', 'success');
+                loadImages();
+
+            } catch (error) {
+                console.error('删除失败:', error);
+                showToast('删除失败: ' + (error.message || '未知错误'), 'error');
+            }
+        }
+
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.id !== 'uploaderName') {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        viewModal.addEventListener('click', (e) => {
+            if (e.target === viewModal) closeViewModal();
+        });
+
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) closeConfirmModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeViewModal();
+                closeConfirmModal();
+            }
+        });
+
+        confirmDeleteBtn.addEventListener('click', deleteImage);
+
+        uploaderNameInput.addEventListener('change', () => {
+            localStorage.setItem('uploaderName', uploaderNameInput.value);
+            displayUserName.textContent = uploaderNameInput.value;
+        });
+
+        initUser();
+        initSupabase();
+        loadImages();
+    </script>
+</body>
+</html>
