@@ -51,3 +51,19 @@ A simple image sharing website that supports uploading, viewing, downloading, an
 ```javascript
 const SUPABASE_URL = 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+### 4. 部署
+ 
+#### 方案A：Netlify（推荐，大陆访问快） 
+ 
+ 1. 注册/登录 https://www.netlify.com 
+ 2. Add new site → Import an existing project 
+ 3. 选择 GitHub，导入你的仓库 
+ 4. Deploy site！完成！ 
+ 5. 可选：Site settings → Change site name，改成你喜欢的名字 
+ 
+ #### 方案 B：Vercel（适合境外） 
+ 
+ 1. 注册/登录 https://vercel.com 
+ 2. New Project → 导入你的仓库 
+ 3. Deploy！完成！
