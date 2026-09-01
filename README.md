@@ -51,10 +51,11 @@ A simple image sharing website that supports uploading, viewing, downloading, an
 ```javascript
 const SUPABASE_URL = 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+```
 
 ### 4. 部署
  
-#### 方案A：Netlify（推荐，大陆访问快） 
+#### 方案A：Netlify（境内用，大陆访问快，不过微信可能会墙） 
  
  1. 注册/登录 https://www.netlify.com 
  2. Add new site → Import an existing project 
