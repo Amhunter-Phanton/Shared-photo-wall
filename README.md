@@ -44,10 +44,9 @@ A simple image sharing website that supports uploading, viewing, downloading, an
   - `user_id` (text)
   - `file_path` (text)
   - `created_at` (timestamptz, Default: now())
-- Policies → Disable RLS（最简单）
 
 ### 3. 修改配置
-编辑 `index.html`，填入你的配置：
+编辑 `photo-wall.html`，填入你的配置：
 
 ```javascript
 const SUPABASE_URL = 'YOUR_SUPABASE_URL';
