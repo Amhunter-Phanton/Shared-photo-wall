@@ -28,7 +28,7 @@ A simple image sharing website that supports uploading, viewing, downloading, an
 #### 存储桶设置
 - Storage → New bucket → 命名为 `photos`
 - 设为 Public bucket
-- Policies → Disable RLS（最简单）或创建Buckets3个： NAME                                   COMMAND       APPLIED TO
+- Policies → Disable RLS（最简单）或创建Buckets3个： NAME                     、           COMMAND    、  APPLIED TO
 -                                                 Allow Public Delete                     DELETE       anon, authenticated
 -                                                 Allow Public Upload                     INSERT       anon, authenticated
 -                                                 Allow Public Read                       SELECT       anon, authenticated
